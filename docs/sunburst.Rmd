@@ -1,0 +1,124 @@
+---
+title: "subburst"
+author: "竹林由武"
+date: "9/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=F,warning=F,error=F, cache=TRUE)
+```
+
+# STMトピックモデル {.tabset .tabset-fade}
+
+## Stucked Area plot
+
+```{r}
+library(stm)
+library(dplyr)
+library(tidyverse)
+library(tidytext)
+library(tidystm)
+#devtools::install_github("mikajoh/tidystm")
+library(ggplot2)
+library(ggthemes)
+library(sunburstR)
+
+model <- readRDS("data/model_12.obj")
+meta <- readRDS("data/meta.obj")
+raw <- read.csv("data/tiabList.csv")
+data <- na.omit(raw)
+
+
+prep3 <-stm:: estimateEffect(c(1:12) ~ poly(py,3), model, metadata=meta)
+
+td_beta<-tidy(model)
+
+library(RColorBrewer)
+library(plotly)
+library(tidystm)
+cols<-brewer.pal(12, "Set3")
+
+effect <- extract.estimateEffect(prep3, 'py', 
+                                 model = model,
+                                 method="pointestimate", 
+                                 labeltype="prob")
+
+
+effect$covariate.value<-as.numeric(effect$covariate.value)
+
+effect%>%filter(covariate.value>1990)->effect2
+
+
+names(effect2)[2]<-"Topic"
+
+effect2$Topic<-as.factor(effect2$Topic)
+
+
+g = ggplot(effect2, aes( x = covariate.value, 
+                         y = estimate, fill = Topic))
+
+g = g + geom_area(col="white")+
+  ylim(0,1.10)+
+  xlab("time")+
+  ylab("Relative topic prevalence")+
+ scale_fill_brewer(palette = "Set3")+
+  theme_minimal()+ 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+#library(htmlwidgets)
+
+plotly::ggplotly(g)
+
+#htmlwidgets::saveWidget(l, "stucked.html")
+
+```
+
+## Sunburst plot
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r }
+
+
+
+top_terms <- td_beta %>%
+  arrange(beta) %>%
+  group_by(topic) %>%
+  top_n(30, beta) %>% arrange(topic,beta)
+
+sequence<-paste0("Topic ",top_terms$topic,"-",top_terms$term)
+
+dfdf<-data.frame(sequence,prob=top_terms$beta)
+
+dfdf%>%sunburst(explanation =
+                  "function(d){return d.data.name}")->p
+p
+
+#htmltools::save_html(p, file = "sunburst.html")
+```
+
+## LDAvis
+
+```{r}
+
+temp<-textProcessor(documents=data$ab,metadata=meta)
+toLDAvis(model,temp$documents,out.dir = "jsn")
+
+```
+
+ <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>LDAvis</title>
+        <script src="jsn/d3.v3.js"></script>
+        <script src="jsn/ldavis.js"></script>
+        <link rel="stylesheet" type="text/css" href="jsn/lda.css">
+      </head>
+
+      <body>
+        <div id = "lda"></div>
+        <script>
+         var vis = new LDAvis("#lda", "jsn/lda.json");
+        </script>
+      </body>
