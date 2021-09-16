@@ -75,9 +75,6 @@ plotly::ggplotly(g)
 ```
 
 ## Sunburst plot
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r }
 
@@ -98,6 +95,51 @@ p
 
 #htmltools::save_html(p, file = "sunburst.html")
 ```
+
+## Word Cloud
+
+```{r}
+library(wordcloud2)
+library(hwordcloud)
+bb<-sort(seq(1,500,12)^3,decreasing = T)
+bbn<-length(bb)
+topics <- labelTopics(model, 1:12,bbn)
+
+
+for (i in 1:12) {
+  
+  topics$frex[i,]
+  bbn1<-bbn+1
+  frex <- data.frame(words=topics$frex[i,], n=bbn1-seq(topics$frex[i,]), stringsAsFactors=F)
+  frex$words <- str_replace_all(frex$words, "_", " ")
+  bb<-sort(seq(0.1,2,0.07),decreasing = T)
+  clouds <- data.frame(words = c(frex$words), 
+                       weight = c(frex$n*bb))
+    assign(paste0("wc_", i), hwordcloud(text = clouds$word, 
+                                        size = clouds$weight,
+                                        width = "100%",
+                                        height = "200px",
+                                        theme = "darkblue"))
+}
+
+
+
+
+wc_1
+wc_2
+wc_3
+wc_4
+wc_5
+wc_6
+wc_7
+wc_8
+wc_9
+wc_10
+wc_11
+wc_12
+
+```
+
 
 ## LDAvis
 

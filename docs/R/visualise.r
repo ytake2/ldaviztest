@@ -15,9 +15,10 @@ modelfn <- args[2]
 metafn <- args[3]
 CLUSTER <- as.integer(args[4])
 
-raw <- read.csv("tiabList.csv")
-model <- readRDS("model_12.obj")
-meta <- readRDS("meta.obj")
+
+raw <- read.csv("data/tiabList.csv")
+model <- readRDS("data/model_12.obj")
+meta <- readRDS("data/meta.obj")
 data <- na.omit(raw)
 
 summary(model)
@@ -199,5 +200,36 @@ dev.off()
 
 
 warnings()
+
+library(stm)
+library(RColorBrewer)
+stm::cloud(model,topic=1,scale=c(3.5,0.25), 
+           min.freq = 1, random.color=T,
+           random.order = FALSE, 
+           colors = brewer.pal(10, "Set3"),
+           family="Helvetica")
+
+
+tp1<-stm::cloud(model,topic=2)
+
+png(tp1, width=1000, height=1000, res=216)
+
+for (i in 1:10){
+  print(paste("CLUSTER : ",i,sep=""))
+  
+  df <- filter(model, topic==i)
+  
+ 
+  png("test12.png", width=1000, height=1000, res=216)
+  stm::cloud(model, topic=12,min.freq = 1, random.color=T,
+             random.order = FALSE, 
+             colors = brewer.pal(10, "Set3"),
+             family="Helvetica")
+  dev.off()
+  print(paste("DONE: make wordcloud",i, sep=" "))
+}
+plot(model,type="summary")
+
+
 
 
